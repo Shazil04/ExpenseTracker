@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <sstream>
 using namespace std;
 class Expense {
     private:int ID ;
@@ -17,6 +19,11 @@ public:
         this->note = note;
     }
 public:
+    void setID(const int &newID) {
+        this->ID = newID;
+
+    }
+public:
     void setDate(const string &newDate) {
         this->date = newDate;
     }
@@ -25,11 +32,6 @@ public:
         this->category = newCategory;
     }
 public:
-    void setNote(const string &newNote) {
-        this->note = newNote;
-    }
-
-public:
     void setAmount(double myAmount) {
         if (myAmount < 0) {
             cout << "Invalid Amount " << myAmount << endl;
@@ -37,6 +39,10 @@ public:
         else {
             amount = myAmount;
         }
+    }
+public:
+    void setNote(const string &newNote) {
+        this->note = newNote;
     }
 public:
     int getID()const  {
@@ -53,6 +59,10 @@ public:
 public:
     string getDate()const {
         return date;
+    }
+public:
+    string getNote()const {
+        return note;
     }
 public:
     void display() const{
@@ -154,48 +164,101 @@ public:
                     if (choice == 1) {
                         cout << "Enter Date (DD/MM/YYYY): ";
                         string newDate;
-                        getline(cin , newDate);
+                        getline(cin, newDate);
                         e.setDate(newDate);
                         cout << "Expense with ID " << ID << " edited." << endl;
-
-                    }
-                    else if (choice == 2) {
+                    } else if (choice == 2) {
                         cout << "Enter Category " << endl;
                         string newCategory;
-                        getline(cin , newCategory);
+                        getline(cin, newCategory);
                         e.setCategory(newCategory);
                         cout << "Expense with ID " << ID << " edited." << endl;
-
-                    }
-                    else if (choice == 3) {
+                    } else if (choice == 3) {
                         cout << "Enter Amount " << endl;
                         double newAmount;
                         cin >> newAmount;
                         e.setAmount(newAmount);
                         cout << "Expense with ID " << ID << " edited." << endl;
-                    }
-                    else if (choice == 4) {
+                    } else if (choice == 4) {
                         cout << "Enter Note " << endl;
                         string newNote;
-                        getline(cin , newNote);
+                        getline(cin, newNote);
                         e.setNote(newNote);
                         cout << "Expense with ID " << ID << " edited." << endl;
-
-                    }
-                    else if (choice == 5) {
+                    } else if (choice == 5) {
                         break;
-
-                    }
-                    else {
+                    } else {
                         cout << "Invalid choice." << endl;
                     }
-
-
                 }
             }
             }
 
     }
+public:
+    void saveToFile() const{
+        ofstream write ("Record.txt" , ios::app);
+        if (!write.is_open()) {
+            cout << "Cannot open file." << endl;
+            return;
+        }
+        for (const Expense &e : expenses) {
+            write << e.getID() << ",";
+            write << e.getDate() << ",";
+            write << e.getCategory() << ",";
+            write << e.getAmount() << ",";
+            write << e.getNote() << endl;
+        }
+        write.close();
+
+    }
+public:
+    void loadFromFile() {
+        ifstream read ("Record.txt", ios::in);
+        if (!read.is_open()) {
+            cout << "Cannot open file." << endl;
+            return;
+
+        }
+        string line;
+        while(getline(read , line)) {
+            stringstream ss(line);
+            string id , date , category , amount , note;
+            getline(ss , id , ',');
+            getline(ss , date , ',');
+            getline(ss , category , ',');
+            getline(ss , amount , ',');
+            getline(ss , note);
+
+            int ID = stoi(id);
+            double Amount = stod(amount);
+
+            Expense e(ID , date , category , Amount , note);
+            expenses.push_back(e);
+        }
+        read.close();
+    }
+public:
+    void finalReportGenerate() const{
+        double totalAmount = 0;
+        vector<string> categories = {"food" , " transport" , "entertainment ", "studies ", "debts ", "shopping" , "others"};
+        vector<double> categoriesTotal(categories.size(), 0.0);
+        for (const Expense &e : expenses) {
+            totalAmount += e.getAmount();
+            for (int i = 0 ; i < categories.size(); i++) {
+                if (categories[i] == e.getCategory()) {
+                    categoriesTotal[i] += e.getAmount();
+                    break;
+                }
+            }
+        }
+        cout << "Total Expenses = " << totalAmount << endl << endl<< endl;
+        cout << "/ncategories breakdown:" << endl << "total categories: " << categoriesTotal.size() << endl;
+        for (int i = 0; i < categories.size(); i++) {
+            cout << categories[i] << ": " << categoriesTotal[i] << endl;
+        }
+    }
+
 
 
 };

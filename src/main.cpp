@@ -4,11 +4,12 @@
 #include <sstream>
 using namespace std;
 class Expense {
-    private:int ID ;
-    private:string date;
-    private:string category;
-    private:double amount;
-    private:string note;
+private:
+    int ID ;
+    string date;
+    string category;
+    double amount;
+    string note;
 
 public:
     Expense(int ID , const string& date , const string &category , double amount , const string & note){

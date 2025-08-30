@@ -102,6 +102,7 @@ public:
         getline(cin , newNote);
         Expense e1(newID, newDate, newCategory, newAmount, newNote);
         expenses.push_back(e1);
+        cout << "Expense addded successfully!" << endl;
 }
 public:
     void viewExpenses() const {
@@ -261,6 +262,62 @@ public:
     }
 
 
+
+};
+
+class UI {
+
+private:
+        ExpensesTracker tracker;
+
+public:
+    UI(){
+        tracker.loadFromFile();
+        cout << "=============================\n";
+        cout << "     EXPENSE TRACKER APP     \n";
+        cout << "=============================\n\n";
+}
+public:
+    ~UI(){
+        tracker.saveToFile();
+}
+public:
+    void mainMenu(){
+    cout << endl << endl;
+    cout << "Choose an option:" << endl;
+    cout << "1. Add Expense \n";
+    cout << "2. Remove Expense \n";
+    cout << "3. View All Expenses \n";
+    cout << "4. Search Expense \n";
+    cout << "5. Edit Expense \n";
+    cout << "6. Report of Expenses \n";
+    cout << "7. Exit\n";
+
+    int option;
+    cin >> option;
+    if (option == 1){
+    tracker.addExpense();
+    }
+    else if (option == 2){
+    cout << endl << endl;
+    tracker.viewExpenses();
+    cout << "Enter Expense ID to delete : ";
+    int ID =0 ;
+    do{
+    cin >> ID;
+    if(ID < 0){
+    cout << "Invalid ID "<< endl << endl;
+
+}
+    else{
+    tracker.deleteExpense(ID);
+    }
+}while(ID > 0);
+
+
+
+
+}
 
 };
 

@@ -21,20 +21,18 @@ public:
         this->amount = amount;
         this->note = note;
     }
-public:
     void setID(const int &newID) {
         this->ID = newID;
 
     }
-public:
     void setDate(const string &newDate) {
         this->date = newDate;
     }
-public:
+
     void setCategory(const string &newCategory) {
         this->category = newCategory;
     }
-public:
+
     void setAmount(double myAmount) {
         if (myAmount < 0) {
             cout << "Invalid Amount " << myAmount << endl;
@@ -43,31 +41,24 @@ public:
             amount = myAmount;
         }
     }
-public:
     void setNote(const string &newNote) {
         this->note = newNote;
     }
-public:
     int getID()const  {
         return ID;
     }
-public:
     string getCategory() const{
         return category;
     }
-public:
     double getAmount() const {
         return amount;
     }
-public:
     string getDate()const {
         return date;
     }
-public:
     string getNote()const {
         return note;
     }
-public:
     void display() const {
              cout << left << setw(5) << ID
              << left << setw(10) << date
@@ -117,8 +108,6 @@ public:
         expenses.push_back(e1);
         saveToFile();
     }
-
-public:
     void viewExpenses() const {
         cout << left << setw(5) << "ID"
         << left << setw(10)<< "Date"
@@ -130,7 +119,6 @@ public:
             e.display();
         }
     }
-public:
     void searchByDate(const string &userDate)const{
         bool found = false;
         for (const Expense &e : expenses){
@@ -143,7 +131,6 @@ public:
             cout << "Not found: Expense not found" << endl;
         }
     }
-public:
     void searchByCategory(const string &userCategory)const{
         bool found = false;
         for (const Expense &e : expenses){
@@ -156,7 +143,6 @@ public:
             cout << "Not found: Expense not found" << endl;
         }
     }
-public:
     void deleteExpense(const int ID){
         for (auto it = expenses.begin(); it != expenses.end(); ++it) {
             if (it->getID() == ID) {
@@ -168,7 +154,6 @@ public:
         }
         cout << "Expense with ID " << ID << " not found." << endl;
     }
-public:
     void editExpense(const int ID) {
         for (Expense &e : expenses) {
             if (e.getID()== ID) {
@@ -217,7 +202,6 @@ public:
             }
 
     }
-public:
     void saveToFile() const{
         ofstream write ("Record.txt" , ios::app);
         if (!write.is_open()) {
@@ -235,7 +219,6 @@ public:
         write.close();
 
     }
-public:
     void loadFromFile() {
         ifstream read ("Record.txt", ios::in);
         if (!read.is_open()) {
@@ -261,7 +244,6 @@ public:
         }
         read.close();
     }
-public:
     void finalReportGenerate() const{
         double totalAmount = 0;
         vector<string> categories = {"food" , " transport" , "entertainment ", "studies ", "debts ", "shopping" , "others"};
@@ -294,23 +276,17 @@ public:
         username = u;
         password = p;
     }
-
-
-    // Getters
-public:
     string getUsername() const {
         return username;
     }
 
-public:
+
     string getPassword() const {
         return password;
     }
-public:
     void setUsername(const string& u) {
         username = u;
     }
-public:
     void setPassword(const string& p) {
         password = p;
 
@@ -318,11 +294,17 @@ public:
 
 };
 
-class userManager {
+class UserManager {
 private:
     vector<User> users;
 
 public:
+    UserManager() {
+        loadFromFile();
+    }
+    ~UserManager() {
+        saveToFile();
+    }
     static bool equalIgnoreCase(const string &a , const string &b) {
         if (a.size() != b.size()) {
             return false;
@@ -335,17 +317,11 @@ public:
         return true;
     }
 
-
-    // Convert user to file format
-public:
-    static string toFileString()const {
-        return username + "," + password;
-
+    static string toFileString(const User &u){
+        return u.getUsername() + "," + u.getPassword();
     }
 
-    // Create user from file line
-public:
-    static User fromFileString(string& line) {
+    static User toVectorUser(const string& line) {
         vector<string> parts;
         string token;
         stringstream ss(line);
@@ -357,13 +333,9 @@ public:
         if (parts.size() == 2) {
             return { parts[0], parts[1] };
         }
+        throw runtime_error("Invalid format");
 
-        // if format wrong → return empty user
-        return { "", "" };
     }
-
-
-public:
     void signUp(){
         cout << "Enter username: ";
         string username;
@@ -387,23 +359,29 @@ public:
         users.emplace_back(username, password);
         cout << "User created successfully!" << endl;
     }
-public:
     void logIn() const{
-        cout << "Enter username: ";
-        string username;
-        getline(cin , username );
-        cout << "Enter password: ";
-        string password;
-        getline(cin , password);
-        for (const User &myUser : users) {
-            if (myUser.getUsername() != username || password != myUser.getPassword()) {
-                cout << "Invalid inputs!" << endl;
+        while (true) {
+            bool confirm = false;
+            cout << "Enter username: ";
+            string username;
+            getline(cin , username );
+            cout << "Enter password: ";
+            string password;
+            getline(cin , password);
+            for (const User &myUser : users) {
+                if (equalIgnoreCase(myUser.getUsername() , username) && equalIgnoreCase(myUser.getPassword() , password)) {
+                    cout << "logged in successfully!" << endl;
+                    confirm = true;
+                    break;
+                }
             }
-            cout << "logged in successfully!" << endl;
+            if (confirm){
+                break;
+            }
+            cout << "Login failed! Try again.\n";
         }
     }
-public:
-    void loadFromFile() const {
+    void loadFromFile(){
         ifstream read ("userRecord.txt", ios::in);
         if (!read.is_open()) {
             cout << "Cannot open file." << endl;
@@ -411,57 +389,47 @@ public:
             return;
         }
         string line;
-        while (getline(read , line)){
-            User newUser = fromFileString(line);
-
-
+        while (getline(read, line)) {
+            try {
+                users.emplace_back(toVectorUser(line));
+            } catch (const runtime_error&) {
+                cout << "Skipping bad line: " << line << endl;
+            }
         }
+
         read.close();
     }
-
-
-    public:
     void saveToFile() const {
         ofstream write ("userRecord.txt", ios::out);
         if (!write.is_open()) {
             cout << "Cannot open file." << endl;
             return;
         }
-        for (const User &myUser : users) {
-            write  << myUser.getUsername()
-            << ","
-            << myUser.getPassword() << endl;
+        for (const User &myUser : users){
+            write << toFileString(myUser) << "\n";
 
         }
         write.close();
-
     }
-
-
-
-
 };
 
 class UI {
 private:
     ExpensesTracker tracker;
+    UserManager users;
 
 public:
     UI(){
-        tracker.loadFromFile();
         cout << "=============================\n";
         cout << "     EXPENSE TRACKER APP     \n";
         cout << "=============================\n\n";
     }
-public:
     ~UI(){
-        tracker.saveToFile();
         cout << "Thanks for using expense tracking.\n";
         cout << "============================\n";
 
     }
-public:
-    void mainMenu() {
+    void run() {
         while (true) {
             cout << "choose an option number:" << endl;
             cout << "1. Main Menu \n";
@@ -530,6 +498,9 @@ public:
                                 cout << endl << endl;
                                 break;
                             }
+                            else {
+                                cout << "Invalid option!" << endl << endl;
+                            }
                         }
                     }
                     else if (option == 5) {
@@ -566,7 +537,6 @@ public:
         }
 
     }
-public:
     void registration() {
         cout << endl << endl;
         while (true) {
@@ -578,11 +548,12 @@ public:
             cin >> choice;
             if (choice == 1) {
                 cout << endl << endl;
-                tracker.signUp();
+                users.signUp();
 
             }
             else if (choice == 2) {
                 cout << endl << endl;
+                users.logIn();
             }
             else if (choice == 3) {
                 cout << endl << endl;
@@ -597,11 +568,11 @@ public:
     }
 };
 
+
 int main() {
     UI ui;
-    ui.mainMenu();
+    ui.run();
     return 0;
-
 }
 
 

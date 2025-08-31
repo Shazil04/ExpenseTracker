@@ -1,7 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <iomanip>
 #include <sstream>
+#include <string>
 using namespace std;
 class Expense {
 private:
@@ -66,13 +68,15 @@ public:
         return note;
     }
 public:
-    void display() const{
-        cout << "ID: " << ID << "  ";
-        cout << "date: " << date << "  ";
-        cout << "category: " << category << "  ";
-        cout << "amount: " << amount << "  ";
-        cout << "note: " << note << "  " ;
+    void display() const {
+             cout << left << setw(5) << ID
+             << left << setw(10) << date
+             << left << setw(15) << category
+             << left << setw(15) << amount
+             << left << setw(20) << note
+             << endl;
     }
+
 };
 
 class ExpensesTracker {
@@ -82,31 +86,47 @@ class ExpensesTracker {
 public:
     void addExpense() {
         int newID = ++nxtID;
-        cout << "Adding Expense " << endl;
-        cout << "Enter Date (DD/MM/YYYY): ";
+        cout << "Adding Expense\n";
+
         string newDate;
-        getline(cin , newDate);
+        cout << "Enter Date (DD/MM/YYYY): ";
+        cin >> newDate;
 
-        cout << "Category: ";
         string newCategory;
-        getline(cin , newCategory);
+        cout << "Category: ";
+        cin >> newCategory;
 
-        cout << "Amount: ";
         double newAmount;
+        cout << "Amount: ";
         cin >> newAmount;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Invalid amount entered!\n";
+            return;
+        }
 
         cin.ignore();
 
-        cout << "Note: ";
         string newNote;
-        getline(cin , newNote);
+        cout << "Note: ";
+        getline(cin, newNote);
+
         Expense e1(newID, newDate, newCategory, newAmount, newNote);
         expenses.push_back(e1);
-        cout << "Expense addded successfully!" << endl;
-}
+        saveToFile();
+    }
+
 public:
     void viewExpenses() const {
-        for (const Expense &e : expenses) {
+        cout << left << setw(5) << "ID"
+        << left << setw(10)<< "Date"
+        << left << setw(15) << "Category"
+        << left << setw(15) << "Amount"
+        << left << setw(20) << "Note"
+        << endl ;
+        for (const Expense &e : expenses){
             e.display();
         }
     }
@@ -210,6 +230,7 @@ public:
             write << e.getCategory() << ",";
             write << e.getAmount() << ",";
             write << e.getNote() << endl;
+            cout << "Expense added successfully!\n\n\n";
         }
         write.close();
 
@@ -260,15 +281,170 @@ public:
             cout << categories[i] << ": " << categoriesTotal[i] << endl;
         }
     }
+};
+class User {
+private:
+    string username;
+    string password;
+
+
+    // Constructor
+public:
+    User(const string& u, const string& p) {
+        username = u;
+        password = p;
+    }
+
+
+    // Getters
+public:
+    string getUsername() const {
+        return username;
+    }
+
+public:
+    string getPassword() const {
+        return password;
+    }
+public:
+    void setUsername(const string& u) {
+        username = u;
+    }
+public:
+    void setPassword(const string& p) {
+        password = p;
+
+    }
+
+};
+
+class userManager {
+private:
+    vector<User> users;
+
+public:
+    static bool equalIgnoreCase(const string &a , const string &b) {
+        if (a.size() != b.size()) {
+            return false;
+        }
+        for (int i = 0; i < a.size(); i++) {
+            if (toupper(a[i]) != toupper(b[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    // Convert user to file format
+public:
+    static string toFileString()const {
+        return username + "," + password;
+
+    }
+
+    // Create user from file line
+public:
+    static User fromFileString(string& line) {
+        vector<string> parts;
+        string token;
+        stringstream ss(line);
+
+        while (getline(ss, token, ',')) {
+            parts.push_back(token);
+        }
+
+        if (parts.size() == 2) {
+            return { parts[0], parts[1] };
+        }
+
+        // if format wrong → return empty user
+        return { "", "" };
+    }
+
+
+public:
+    void signUp(){
+        cout << "Enter username: ";
+        string username;
+        getline(cin , username );
+        for (const User &myUser : users) {
+            if (equalIgnoreCase(myUser.getUsername() , username)) {
+                cout << "User already exists." << endl;
+                return;
+            }
+        }
+        cout << "Enter password: ";
+        string password;
+        getline(cin , password);
+        cout << "confirm password: ";
+        string confirmPassword;
+        getline(cin , confirmPassword);
+        if (password != confirmPassword) {
+            cout << "Password didn't match!" << endl;
+            return;
+        }
+        users.emplace_back(username, password);
+        cout << "User created successfully!" << endl;
+    }
+public:
+    void logIn() const{
+        cout << "Enter username: ";
+        string username;
+        getline(cin , username );
+        cout << "Enter password: ";
+        string password;
+        getline(cin , password);
+        for (const User &myUser : users) {
+            if (myUser.getUsername() != username || password != myUser.getPassword()) {
+                cout << "Invalid inputs!" << endl;
+            }
+            cout << "logged in successfully!" << endl;
+        }
+    }
+public:
+    void loadFromFile() const {
+        ifstream read ("userRecord.txt", ios::in);
+        if (!read.is_open()) {
+            cout << "Cannot open file." << endl;
+
+            return;
+        }
+        string line;
+        while (getline(read , line)){
+            User newUser = fromFileString(line);
+
+
+        }
+        read.close();
+    }
+
+
+    public:
+    void saveToFile() const {
+        ofstream write ("userRecord.txt", ios::out);
+        if (!write.is_open()) {
+            cout << "Cannot open file." << endl;
+            return;
+        }
+        for (const User &myUser : users) {
+            write  << myUser.getUsername()
+            << ","
+            << myUser.getPassword() << endl;
+
+        }
+        write.close();
+
+    }
+
 
 
 
 };
 
 class UI {
-
 private:
-        ExpensesTracker tracker;
+    ExpensesTracker tracker;
 
 public:
     UI(){
@@ -276,53 +452,158 @@ public:
         cout << "=============================\n";
         cout << "     EXPENSE TRACKER APP     \n";
         cout << "=============================\n\n";
-}
+    }
 public:
     ~UI(){
         tracker.saveToFile();
-}
+        cout << "Thanks for using expense tracking.\n";
+        cout << "============================\n";
+
+    }
 public:
-    void mainMenu(){
-    cout << endl << endl;
-    cout << "Choose an option:" << endl;
-    cout << "1. Add Expense \n";
-    cout << "2. Remove Expense \n";
-    cout << "3. View All Expenses \n";
-    cout << "4. Search Expense \n";
-    cout << "5. Edit Expense \n";
-    cout << "6. Report of Expenses \n";
-    cout << "7. Exit\n";
+    void mainMenu() {
+        while (true) {
+            cout << "choose an option number:" << endl;
+            cout << "1. Main Menu \n";
+            cout << "2. Register yourself\n";
+            cout << "3. Exit\n";
+            int choice;
+            cin >> choice;
+            if (choice == 1) {
+                cout << endl << endl;
+                while (true) {
+                    cout << "Choose an option number:" << endl;
+                    cout << "1. Add Expense \n";
+                    cout << "2. Remove Expense \n";
+                    cout << "3. View All Expenses \n";
+                    cout << "4. Search Expense \n";
+                    cout << "5. Edit Expense \n";
+                    cout << "6. Report of Expenses \n";
+                    cout << "7. Exit\n";
+                    int option;
+                    cin >> option;
+                    if (option == 1) {
+                        tracker.addExpense();
+                    }
+                    else if (option == 2) {
+                        cout << endl << endl;
+                        tracker.viewExpenses();
+                        cout << "Enter Expense ID to delete : ";
+                        int ID =0 ;
+                        do{
+                            cin >> ID;
+                            if(ID < 0) {
+                                cout << "Invalid ID "<< endl << endl;
+                            }
+                            else{
+                                tracker.deleteExpense(ID);
+                            }
+                        }while(ID > 0);
+                    }
+                    else if (option == 3) {
+                        cout << endl << endl;
+                        tracker.viewExpenses();
+                    }
+                    else if (option == 4) {
+                        cout << endl << endl;
+                        while (true) {
+                            cout << "choose an option number:" << endl;
+                            cout << "1. Search by Date\n";
+                            cout << "2. Search by category \n";
+                            cout << "3. Exit \n";
+                            int myOption;
+                            cin >> myOption;
+                            if (myOption == 1) {
+                                cout << "Enter Date to search:" << endl;
+                                string date;
+                                getline(cin , date);
+                                tracker.searchByDate(date);
+                            }
+                            else if (myOption == 2) {
+                                cout << "Enter Category to search:" << endl;
+                                cout << endl << endl;
+                                string category;
+                                getline(cin , category);
+                                tracker.searchByCategory(category);
+                            }
+                            else if (myOption == 3) {
+                                cout << endl << endl;
+                                break;
+                            }
+                        }
+                    }
+                    else if (option == 5) {
+                        cout << endl << endl;
+                        tracker.viewExpenses();
+                        cout << "Enter Expense ID to edit: ";
+                        int ID;
+                        cin >> ID;
+                        tracker.editExpense(ID);
+                    }
+                    else if (option == 6) {
+                        cout << endl << endl;
+                        tracker.finalReportGenerate();
 
-    int option;
-    cin >> option;
-    if (option == 1){
-    tracker.addExpense();
+                    }
+                    else if (option == 7) {
+                        cout << endl << endl;
+                        break;
+                    }
+                    else {
+                        cout << "invalid option." << endl << endl;
+                    }
+                }
+            }
+            else if (choice == 2) {
+                registration();
+            }
+            else if (choice == 3) {
+                break;
+            }
+            else {
+                cout << "Invalid choice." << endl;
+            }
+        }
+
     }
-    else if (option == 2){
-    cout << endl << endl;
-    tracker.viewExpenses();
-    cout << "Enter Expense ID to delete : ";
-    int ID =0 ;
-    do{
-    cin >> ID;
-    if(ID < 0){
-    cout << "Invalid ID "<< endl << endl;
+public:
+    void registration() {
+        cout << endl << endl;
+        while (true) {
+            cout << "choose an option number:" << endl;
+            cout << "1. Create Account \n";
+            cout << "2. Account Already Exists \n";
+            cout << "3. Exit \n";
+            int choice;
+            cin >> choice;
+            if (choice == 1) {
+                cout << endl << endl;
+                tracker.signUp();
 
-}
-    else{
-    tracker.deleteExpense(ID);
+            }
+            else if (choice == 2) {
+                cout << endl << endl;
+            }
+            else if (choice == 3) {
+                cout << endl << endl;
+                break;
+            }
+            else {
+                cout << "invalid choice." << endl;
+            }
+        }
+
+
     }
-}while(ID > 0);
-
-
-
-
-}
-
 };
 
 int main() {
-
-    cout << "Expense Tracker Project Initialized!" << endl;
+    UI ui;
+    ui.mainMenu();
     return 0;
+
 }
+
+
+
+

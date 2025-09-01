@@ -106,7 +106,6 @@ public:
 
         Expense e1(newID, newDate, newCategory, newAmount, newNote);
         expenses.push_back(e1);
-        saveToFile();
     }
     void viewExpenses() const {
         cout << left << setw(5) << "ID"
@@ -134,21 +133,22 @@ public:
     void searchByCategory(const string &userCategory)const{
         bool found = false;
         for (const Expense &e : expenses){
-            if (e.getCategory() == userCategory) {
+            if (e.getCategory() == userCategory){
                 e.display();
                 found = true;
             }
         }
-        if (!found) {
+        if (!found){
             cout << "Not found: Expense not found" << endl;
         }
     }
     void deleteExpense(const int ID){
-        for (auto it = expenses.begin(); it != expenses.end(); ++it) {
+        for (auto it = expenses.begin(); it != expenses.end(); ++it){
             if (it->getID() == ID) {
                 expenses.erase(it);
                 cout << "Expense with ID " << ID << " deleted." << endl;
                 return;
+
 
             }
         }
@@ -227,6 +227,7 @@ public:
 
         }
         string line;
+        int maxID = 0;
         while(getline(read , line)) {
             stringstream ss(line);
             string id , date , category , amount , note;
@@ -240,8 +241,10 @@ public:
             double Amount = stod(amount);
 
             Expense e(ID , date , category , Amount , note);
+            maxID = max(maxID, ID);
             expenses.push_back(e);
         }
+        nxtID = maxID;
         read.close();
     }
     void finalReportGenerate() const{
@@ -299,12 +302,6 @@ private:
     vector<User> users;
 
 public:
-    UserManager() {
-        loadFromFile();
-    }
-    ~UserManager() {
-        saveToFile();
-    }
     static bool equalIgnoreCase(const string &a , const string &b) {
         if (a.size() != b.size()) {
             return false;
@@ -423,10 +420,12 @@ public:
         cout << "=============================\n";
         cout << "     EXPENSE TRACKER APP     \n";
         cout << "=============================\n\n";
+        tracker.loadFromFile();
     }
     ~UI(){
         cout << "Thanks for using expense tracking.\n";
         cout << "============================\n";
+        tracker.loadFromFile();
 
     }
     void run() {
@@ -456,17 +455,17 @@ public:
                     else if (option == 2) {
                         cout << endl << endl;
                         tracker.viewExpenses();
-                        cout << "Enter Expense ID to delete : ";
-                        int ID =0 ;
-                        do{
-                            cin >> ID;
-                            if(ID < 0) {
-                                cout << "Invalid ID "<< endl << endl;
-                            }
-                            else{
-                                tracker.deleteExpense(ID);
-                            }
-                        }while(ID > 0);
+                        cout << "Enter Expense ID to delete: ";
+                        int ID;
+                        cin >> ID;
+
+                        if (ID <= 0) {
+                            cout << "Invalid ID.\n";
+                        } else {
+                            tracker.deleteExpense(ID);
+                            tracker.saveToFile();
+                        }
+
                     }
                     else if (option == 3) {
                         cout << endl << endl;

@@ -60,10 +60,12 @@ public:
         return note;
     }
     void display() const {
+
+
              cout << left << setw(5) << ID
-             << left << setw(10) << date
+             << left << setw(15) << date
              << left << setw(15) << category
-             << left << setw(15) << amount
+             << left << setw(10)  << fixed << setprecision(2) << amount
              << left << setw(20) << note
              << endl;
     }
@@ -106,20 +108,36 @@ public:
 
         Expense e1(newID, newDate, newCategory, newAmount, newNote);
         expenses.push_back(e1);
+        saveToFile();
+        cout << "Expense added successfully!\n\n\n";
     }
     void viewExpenses() const {
-        cout << left << setw(5) << "ID"
-        << left << setw(10)<< "Date"
+        cout << "=======================================================" << endl
+        << "                  ===================" << endl
+        << "                  |   ALL  EXPENSES  |" << endl
+        << "                  ===================" << endl
+        << left << setw(5) << "ID"
+        << left << setw(15)<< "Date"
         << left << setw(15) << "Category"
-        << left << setw(15) << "Amount"
+        << left << setw(10) << "Amount"
         << left << setw(20) << "Note"
         << endl ;
         for (const Expense &e : expenses){
             e.display();
         }
+        cout << "\n====================================================" << endl;
     }
     void searchByDate(const string &userDate)const{
         bool found = false;
+        cout << "\n=======================================================" << endl
+        << "        All expenses for your selected date: " << endl
+        << "=======================================================" << endl
+        << left << setw(5) << "ID"
+        << left << setw(15)<< "Date"
+        << left << setw(15) << "Category"
+        << left << setw(10) << "Amount"
+        << left << setw(20) << "Note"
+        << endl << endl;
         for (const Expense &e : expenses){
             if (e.getDate() == userDate) {
                 e.display();
@@ -129,9 +147,19 @@ public:
         if (!found) {
             cout << "Not found: Expense not found" << endl;
         }
+        cout << "\n=======================================================" << endl;
     }
     void searchByCategory(const string &userCategory)const{
         bool found = false;
+        cout << "\n=======================================================" << endl
+        << "       All expenses for your selected category: " << endl
+        << "=======================================================" << endl
+        << left << setw(5) << "ID"
+        << left << setw(15)<< "Date"
+        << left << setw(15) << "Category"
+        << left << setw(10) << "Amount"
+        << left << setw(20) << "Note"
+        << endl << endl;
         for (const Expense &e : expenses){
             if (e.getCategory() == userCategory){
                 e.display();
@@ -141,6 +169,7 @@ public:
         if (!found){
             cout << "Not found: Expense not found" << endl;
         }
+        cout << "\n=======================================================" << endl;
     }
     void deleteExpense(const int ID){
         for (auto it = expenses.begin(); it != expenses.end(); ++it){
@@ -153,13 +182,16 @@ public:
             }
         }
         cout << "Expense with ID " << ID << " not found." << endl;
+        saveToFile();
     }
     void editExpense(const int ID) {
         for (Expense &e : expenses) {
             if (e.getID()== ID) {
+                cout << "\n=======================================================" << endl;
                 e.display();
+                cout << "======================================================" << endl;
                 while (true) {
-                    cout << "What do you want to edit: " << endl;
+                    cout << "\nWhat do you want to edit: " << endl;
                     cout << "1. Date " << endl;
                     cout << "2. Category " << endl;
                     cout << "3. Amount" << endl;
@@ -173,25 +205,37 @@ public:
                         string newDate;
                         getline(cin, newDate);
                         e.setDate(newDate);
-                        cout << "Expense with ID " << ID << " edited." << endl;
+                        cout << "Expense with ID " << ID << " edited." ;
+                        cout << "\n=======================================================" << endl;
+                        e.display();
+                        cout << "======================================================" << endl;
                     } else if (choice == 2) {
                         cout << "Enter Category " << endl;
                         string newCategory;
                         getline(cin, newCategory);
                         e.setCategory(newCategory);
-                        cout << "Expense with ID " << ID << " edited." << endl;
+                        cout << "Expense with ID " << ID << " edited."
+                        << "\n=======================================================" << endl;
+                        e.display();
+                        cout << "======================================================" << endl;
                     } else if (choice == 3) {
                         cout << "Enter Amount " << endl;
                         double newAmount;
                         cin >> newAmount;
                         e.setAmount(newAmount);
-                        cout << "Expense with ID " << ID << " edited." << endl;
+                        cout << "Expense with ID " << ID << " edited."
+                        << "\n=======================================================" << endl;
+                        e.display();
+                        cout << "======================================================" << endl;
                     } else if (choice == 4) {
                         cout << "Enter Note " << endl;
                         string newNote;
                         getline(cin, newNote);
                         e.setNote(newNote);
-                        cout << "Expense with ID " << ID << " edited." << endl;
+                        cout << "Expense with ID " << ID << " edited."
+                        << "\n=======================================================" << endl;
+                        e.display();
+                        cout << "======================================================" << endl;
                     } else if (choice == 5) {
                         break;
                     } else {
@@ -203,7 +247,7 @@ public:
 
     }
     void saveToFile() const{
-        ofstream write ("Record.txt" , ios::app);
+        ofstream write ("Record.txt" , ios::out);
         if (!write.is_open()) {
             cout << "Cannot open file." << endl;
             return;
@@ -214,7 +258,6 @@ public:
             write << e.getCategory() << ",";
             write << e.getAmount() << ",";
             write << e.getNote() << endl;
-            cout << "Expense added successfully!\n\n\n";
         }
         write.close();
 
@@ -249,22 +292,80 @@ public:
     }
     void finalReportGenerate() const{
         double totalAmount = 0;
-        vector<string> categories = {"food" , " transport" , "entertainment ", "studies ", "debts ", "shopping" , "others"};
+        vector<string> categories = {"food" , "transport" , "entertainment ", "studies ", "debts ", "shopping" , "others"};
         vector<double> categoriesTotal(categories.size(), 0.0);
+        vector<double> percentages(categories.size(), 0.0);
         for (const Expense &e : expenses) {
             totalAmount += e.getAmount();
             for (int i = 0 ; i < categories.size(); i++) {
                 if (categories[i] == e.getCategory()) {
                     categoriesTotal[i] += e.getAmount();
+
                     break;
                 }
             }
         }
-        cout << "Total Expenses = " << totalAmount << endl << endl<< endl;
-        cout << "/ncategories breakdown:" << endl << "total categories: " << categoriesTotal.size() << endl;
         for (int i = 0; i < categories.size(); i++) {
-            cout << categories[i] << ": " << categoriesTotal[i] << endl;
+            if (totalAmount > 0) {
+                percentages[i] = (categoriesTotal[i] / totalAmount) * 100.0;
+            } else {
+                percentages[i] = 0.0;
+            }
         }
+        string expensive = myExpensiveCategory();
+
+        cout << "======================================================" << endl
+        << "                  ===================" << endl
+        << "                  | EXPENSE REPORT  |" << endl
+        << "                  ===================" << endl
+        << "\nCategories Breakdown:" << endl
+        << "=====================" << endl << endl
+        << "=====================================================" << endl
+        << left << setw(20) <<  "Category" << left  << setw(20) << "Expense" << "Percentage" << endl
+        << "=====================================================" << endl ;
+        for (int i = 0; i < categories.size(); i++) {
+            cout << left << setw(20) <<  categories[i] << left  << setw(20) << fixed << setprecision(2) <<  categoriesTotal[i] << fixed << setprecision(2) << percentages[i] << "%" << endl;
+        }
+        cout << "=====================================================" << endl
+        << "\nSummary:" << endl
+        << "===========" << endl
+        << "Total Expenses = " << fixed << setprecision(2) << totalAmount << endl << endl << endl
+        << "Most Expensive Category = "  << expensive << endl
+        << "Most Cheapest Category = "  << expensive << endl
+
+        << "======================================================" << endl;
+    }
+    void showSingleExpense(int a) const {
+        for (const Expense &e : expenses) {
+            if (a == e.getID()) {
+                e.display();
+                return;
+            }
+        }
+        cout << "Expense with ID = " << a << " not found" << endl;
+    }
+    string myExpensiveCategory() const {
+        double amount  = INT_MIN;
+        string myCategory ;
+        for (const Expense &e : expenses) {
+            if (e.getAmount() > amount) {
+                myCategory = e.getCategory();
+                amount = e.getAmount();
+            }
+        }
+        return myCategory;
+    }
+
+    string myCheapestCategory() const {
+        double amount  = INT_MAX;
+        string myCategory ;
+        for (const Expense &e : expenses){
+            if (e.getAmount() < amount && e.getAmount() > 0) {
+                myCategory = e.getCategory();
+                amount = e.getAmount();
+            }
+        }
+        return myCategory;
     }
 };
 class User {
@@ -425,7 +526,6 @@ public:
     ~UI(){
         cout << "Thanks for using expense tracking.\n";
         cout << "============================\n";
-        tracker.loadFromFile();
 
     }
     void run() {
@@ -458,12 +558,19 @@ public:
                         cout << "Enter Expense ID to delete: ";
                         int ID;
                         cin >> ID;
-
                         if (ID <= 0) {
                             cout << "Invalid ID.\n";
-                        } else {
-                            tracker.deleteExpense(ID);
-                            tracker.saveToFile();
+                        }
+                        else {
+                            cout << endl << endl;
+                            cout << "Are you sure to delete expense with ID = " << ID << ": (Y/N)" << endl;
+                            tracker.showSingleExpense(ID);
+                            string c;
+                            cin >> c;
+                            if (UserManager::equalIgnoreCase(c , "y")) {
+                                tracker.deleteExpense(ID);
+                                tracker.saveToFile();
+                            }
                         }
 
                     }
@@ -480,6 +587,7 @@ public:
                             cout << "3. Exit \n";
                             int myOption;
                             cin >> myOption;
+                            cin.ignore();
                             if (myOption == 1) {
                                 cout << "Enter Date to search:" << endl;
                                 string date;
@@ -488,10 +596,10 @@ public:
                             }
                             else if (myOption == 2) {
                                 cout << "Enter Category to search:" << endl;
-                                cout << endl << endl;
                                 string category;
                                 getline(cin , category);
                                 tracker.searchByCategory(category);
+                                cout << endl << endl;
                             }
                             else if (myOption == 3) {
                                 cout << endl << endl;
@@ -499,6 +607,7 @@ public:
                             }
                             else {
                                 cout << "Invalid option!" << endl << endl;
+                                break;
                             }
                         }
                     }
@@ -548,6 +657,7 @@ public:
             if (choice == 1) {
                 cout << endl << endl;
                 users.signUp();
+                users.saveToFile();
 
             }
             else if (choice == 2) {

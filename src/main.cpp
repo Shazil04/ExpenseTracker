@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <limits>
+
 using namespace std;
 class Expense {
 private:
@@ -77,6 +79,17 @@ class ExpensesTracker {
     int nxtID = 0;
 
 public:
+    static bool equalIgnoreCase2(const string &a , const string &b) {
+        if (a.size() != b.size()) {
+            return false;
+        }
+        for (int i = 0; i < a.size(); i++) {
+            if (toupper(a[i]) != toupper(b[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
     void addExpense() {
         int newID = ++nxtID;
         cout << "Adding Expense\n";
@@ -161,7 +174,7 @@ public:
         << left << setw(20) << "Note"
         << endl << endl;
         for (const Expense &e : expenses){
-            if (e.getCategory() == userCategory){
+            if (equalIgnoreCase2(userCategory , e.getCategory())) {
                 e.display();
                 found = true;
             }
@@ -176,6 +189,7 @@ public:
             if (it->getID() == ID) {
                 expenses.erase(it);
                 cout << "Expense with ID " << ID << " deleted." << endl;
+                saveToFile();
                 return;
 
 
@@ -222,6 +236,7 @@ public:
                         cout << "Enter Amount " << endl;
                         double newAmount;
                         cin >> newAmount;
+                        cin.ignore();
                         e.setAmount(newAmount);
                         cout << "Expense with ID " << ID << " edited."
                         << "\n=======================================================" << endl;
@@ -232,6 +247,7 @@ public:
                         string newNote;
                         getline(cin, newNote);
                         e.setNote(newNote);
+                        saveToFile();
                         cout << "Expense with ID " << ID << " edited."
                         << "\n=======================================================" << endl;
                         e.display();
@@ -240,6 +256,8 @@ public:
                         break;
                     } else {
                         cout << "Invalid choice." << endl;
+                        cin.clear();
+                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     }
                 }
             }
@@ -292,13 +310,13 @@ public:
     }
     void finalReportGenerate() const{
         double totalAmount = 0;
-        vector<string> categories = {"food" , "transport" , "entertainment ", "studies ", "debts ", "shopping" , "others"};
+        vector<string> categories = {"Food" , "Transport" , "Entertainment", "Studies", "Debts", "Shopping" , "Medical" , "Others"};
         vector<double> categoriesTotal(categories.size(), 0.0);
         vector<double> percentages(categories.size(), 0.0);
         for (const Expense &e : expenses) {
             totalAmount += e.getAmount();
             for (int i = 0 ; i < categories.size(); i++) {
-                if (categories[i] == e.getCategory()) {
+                if (equalIgnoreCase2(categories[i] , e.getCategory())) {
                     categoriesTotal[i] += e.getAmount();
 
                     break;
@@ -313,13 +331,14 @@ public:
             }
         }
         string expensive = myExpensiveCategory();
+        string cheapest = myCheapestCategory();
 
         cout << "======================================================" << endl
         << "                  ===================" << endl
         << "                  | EXPENSE REPORT  |" << endl
         << "                  ===================" << endl
         << "\nCategories Breakdown:" << endl
-        << "=====================" << endl << endl
+        << "=====================" << endl
         << "=====================================================" << endl
         << left << setw(20) <<  "Category" << left  << setw(20) << "Expense" << "Percentage" << endl
         << "=====================================================" << endl ;
@@ -327,13 +346,12 @@ public:
             cout << left << setw(20) <<  categories[i] << left  << setw(20) << fixed << setprecision(2) <<  categoriesTotal[i] << fixed << setprecision(2) << percentages[i] << "%" << endl;
         }
         cout << "=====================================================" << endl
-        << "\nSummary:" << endl
-        << "===========" << endl
-        << "Total Expenses = " << fixed << setprecision(2) << totalAmount << endl << endl << endl
-        << "Most Expensive Category = "  << expensive << endl
-        << "Most Cheapest Category = "  << expensive << endl
-
-        << "======================================================" << endl;
+        << "Summary:" << endl
+        << "========" << endl
+        << "*> Total Expenses = " << fixed << setprecision(2) << totalAmount << endl
+        << "*> Most Expensive Category = "  << expensive << endl
+        << "*> Most Cheapest Category = "  << cheapest << endl
+        << "======================================================" << endl << endl ;
     }
     void showSingleExpense(int a) const {
         for (const Expense &e : expenses) {
@@ -437,7 +455,11 @@ public:
     void signUp(){
         cout << "Enter username: ";
         string username;
-        getline(cin , username );
+        getline(cin, username);
+        if (username.empty()) {
+            cout << "Username cannot be empty." << endl;
+            return;
+        }
         for (const User &myUser : users) {
             if (equalIgnoreCase(myUser.getUsername() , username)) {
                 cout << "User already exists." << endl;
@@ -446,39 +468,70 @@ public:
         }
         cout << "Enter password: ";
         string password;
-        getline(cin , password);
+        getline(cin, password);
+        if (password.empty()) {
+            cout << "Password cannot be empty." << endl;
+            return;
+        }
         cout << "confirm password: ";
         string confirmPassword;
         getline(cin , confirmPassword);
-        if (password != confirmPassword) {
-            cout << "Password didn't match!" << endl;
-            return;
+        if (password == confirmPassword) {
+            users.emplace_back(username, password);
+            cout << "User created successfully!" << endl;
         }
-        users.emplace_back(username, password);
-        cout << "User created successfully!" << endl;
+        else {
+            cout << "Password didn't match!" << endl;
+        }
+
     }
-    void logIn() const{
-        while (true) {
-            bool confirm = false;
+    void logIn() const {
+        int counter = 1;
+        bool confirm = false;
+
+        while (counter <= 5) {
             cout << "Enter username: ";
             string username;
-            getline(cin , username );
-            cout << "Enter password: ";
-            string password;
-            getline(cin , password);
+            getline(cin, username);
+
+            if (username.empty()) {
+                cout << "Username cannot be empty." << endl;
+                return;
+            }
+            const User* foundUser = nullptr;
             for (const User &myUser : users) {
-                if (equalIgnoreCase(myUser.getUsername() , username) && equalIgnoreCase(myUser.getPassword() , password)) {
-                    cout << "logged in successfully!" << endl;
-                    confirm = true;
+                if (username == myUser.getUsername()) {
+                    foundUser = &myUser;
                     break;
                 }
             }
-            if (confirm){
-                break;
+            if (!foundUser){
+                cout << "Wrong Username! " << endl;
+            } else {
+                cout << "Enter password: ";
+                string password;
+                getline(cin, password);
+
+                if (password == foundUser->getPassword()) {
+                    cout << "Logged in successfully!" << endl;
+                    cout << "Welcome " << username << "!" << endl << endl;
+                    confirm = true;
+                    break;
+                } else {
+                    cout << "Wrong Password!" << endl;
+                }
             }
+
             cout << "Login failed! Try again.\n";
+            cout << "Attempts left: " << 5 - counter << endl;
+            counter++;
+        }
+        if (!confirm) {
+            cout << "No attempt left, try again in 30 minutes!" << endl;
         }
     }
+
+
     void loadFromFile(){
         ifstream read ("userRecord.txt", ios::in);
         if (!read.is_open()) {
@@ -522,10 +575,12 @@ public:
         cout << "     EXPENSE TRACKER APP     \n";
         cout << "=============================\n\n";
         tracker.loadFromFile();
+        users.loadFromFile();
     }
     ~UI(){
-        cout << "Thanks for using expense tracking.\n";
-        cout << "============================\n";
+        cout << "============================================\n"
+        << "      THANKS FOR USING EXPENSE TRACKING \n"
+        << "============================================\n";
 
     }
     void run() {
@@ -536,6 +591,7 @@ public:
             cout << "3. Exit\n";
             int choice;
             cin >> choice;
+            cin.ignore();
             if (choice == 1) {
                 cout << endl << endl;
                 while (true) {
@@ -549,6 +605,7 @@ public:
                     cout << "7. Exit\n";
                     int option;
                     cin >> option;
+                    cin.ignore();
                     if (option == 1) {
                         tracker.addExpense();
                     }
@@ -607,7 +664,9 @@ public:
                             }
                             else {
                                 cout << "Invalid option!" << endl << endl;
-                                break;
+                                cin.clear();
+                                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
                             }
                         }
                     }
@@ -629,7 +688,9 @@ public:
                         break;
                     }
                     else {
-                        cout << "invalid option." << endl << endl;
+                        cout << "invalid option." << endl;
+                        cin.clear();
+                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     }
                 }
             }
@@ -641,6 +702,8 @@ public:
             }
             else {
                 cout << "Invalid choice." << endl;
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
             }
         }
 
@@ -654,6 +717,7 @@ public:
             cout << "3. Exit \n";
             int choice;
             cin >> choice;
+            cin.ignore();
             if (choice == 1) {
                 cout << endl << endl;
                 users.signUp();
@@ -670,6 +734,8 @@ public:
             }
             else {
                 cout << "invalid choice." << endl;
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
             }
         }
 
